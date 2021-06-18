@@ -1,0 +1,21 @@
+import axios from "axios";
+
+class ApiService {
+  constructor() {
+    this.http = axios;
+    this.http.defaults.baseURL = 'http://localhost:3001/';
+    
+  }
+  get(url) {
+    return this.http.get(url);
+
+  }
+  delete(url, body){
+    return this.http.delete(url, body);
+  }
+  post(url, body) {
+    return this.http.post(url, body);
+  }
+}
+
+export default new ApiService();
