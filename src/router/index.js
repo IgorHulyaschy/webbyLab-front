@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-// import Main from '../views/Main'
+import Main from '../views/Main'
 import AddFilm from '../views/AddFilm'
 import Search from '../views/Search'
 import Films from '../views/Films'
@@ -17,9 +17,14 @@ const routes = [
     component: Search,
   },
   {
-    path: '/',
+    path: '/films',
     name: "Films",
     component: Films,
+  },
+  {
+    path: "/",
+    name: "Main",
+    component: Main
   }
 ]
 

@@ -6,10 +6,12 @@
       <div class="settings">
         <span>Name</span>
         <Text placeholder="Type film`s name here..." v-model="filmName"/>
+        <span class="error">{{filmError}}</span>
       </div>
       <div class="settings">
         <span>Year</span>
         <Text placeholder="Year of release..." v-model="date_of_release"/>
+        <span class="error">{{yearError}}</span>
       </div>
       <div class="wrap-radio">
         <Radio name="format" value="DVD" id="DVD" v-model="selected"/><label for="DVD">DVD</label>
@@ -25,7 +27,9 @@
           <span>Actor`s last name</span>
           <Text placeholder="Last name..." v-model="input.lname"/>
         </div>
+        <hr/>
       </div>
+      <input type="file" @change="getFile"/>
       <div class="buts">
         <CustomBut value="Add actor" @click.prevent="pushInput"/>
         <CustomBut value="Add film" @click="create"/>
@@ -42,6 +46,8 @@ import Radio from '../components/controllers/Radio.vue'
 import CustomBut from '../components/controllers/CustomBut.vue'
 import api from '../api/api'
 import router from '../router/index'
+import { useField } from 'vee-validate'
+import * as yup from 'yup'
 export default {
   name: "AddFilm",
   components: {
@@ -51,13 +57,18 @@ export default {
     CustomBut,
   },
   data() {
+    const {errorMessage: filmError, value: filmName} = useField('fieldName', yup.string().min(3).max(30).required());
+    const {errorMessage: yearError, value: date_of_release} = useField('fieldName', yup.number().min(1900).max(2021).required());
     return {
       selected: "",
       actors: [
         {fname: this.fname, lname: this.lname}
       ],
-      filmName: "",
-      date_of_release: "",
+      filmName,
+      date_of_release,
+      file: String,
+      filmError,
+      yearError
     }
   },
   methods: {
@@ -66,6 +77,20 @@ export default {
         fname: "", 
         lname: "",
       })
+    },
+    getFile(e){
+      const file = e.target.files[0]
+      const reader = new FileReader();
+      reader.addEventListener('load', event => {
+        let content = event.target.result;
+        let rows = content.split('\r\n');
+        api.post('films', rows)
+          .then(() => {
+            console.log("succses")
+            router.push('/films')
+          });
+      });
+      reader.readAsText(file)        
     },
     create() {
       const data = {
@@ -77,6 +102,9 @@ export default {
       api.post("film", data)
         .then(() => {
           router.push('/films')
+        })
+        .catch((err) => {
+          console.log(err.details.message)
         })
     }
   }
@@ -119,7 +147,16 @@ export default {
       span{
       margin-top: 20px;
       align-self: flex-start;
+      color: rgb(187, 187, 187);
       }
+      .error{
+        color: rgb(197, 31, 31);
+      }
+    }
+    hr{
+      width: 70%;
+      
+      margin-top: 10px;
     }
     .actors{
       width: 60%;

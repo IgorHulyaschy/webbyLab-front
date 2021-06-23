@@ -4,6 +4,7 @@
     <span class="info">Date: {{date_of_release}}</span>
     <span class="info">Format: {{format}}</span>
   </div>
+  <hr/>
 </template>
 
 <script>
