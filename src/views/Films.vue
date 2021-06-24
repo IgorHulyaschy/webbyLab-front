@@ -1,5 +1,6 @@
 <template>
   <Header/>
+  <div class="delete" v-if="deleteTrue"> DELETED! </div>
   <div class="wrap-cont">
     <div class="wrapper">
       <div class="wrap" v-for="film in films"  :key="film.id">
@@ -22,6 +23,11 @@
           </li>
         </ul>
         <CustomBut value="delete" @click="deleteFilm(film.id)"/>
+        <div class="alert" v-if="deleteBool">
+          Do you want to delete this film from the list?
+          <CustomBut value="Yes" @click="deleteIt(film.id)"/>
+          <CustomBut value="No" @click="hide"/>
+        </div>
       </div>
     </div>
   </div>
@@ -45,6 +51,8 @@ export default {
       actors: [],
       info: false,
       film: {},
+      deleteBool: false,
+      deleteTrue: false,
     }
   },
   beforeCreate(){
@@ -57,24 +65,40 @@ export default {
     log(id) {
       api.get(`film/info/${id}`)
         .then((res) => {
+          this.deleteBool = false;
           this.info = true;
           this.film = res.data.film
           this.actors = res.data.actors
         })
     },
-    deleteFilm(id) {
+    deleteFilm() {
+      this.deleteBool = true;
+    },
+    deleteIt(id) {
       const list = this.films.filter( item => {
         return item.id != id
       })
       this.films = list;
       this.info = false;
       api.delete('film', {data:{id: id}})
+        .then(() => {
+          this.deleteBool = false;
+          this.deleteTrue = true;
+          setTimeout(() =>{this.deleteTrue = false}, 3000)
+        })
+    },
+    hide() {
+      this.deleteBool = false;
     }
   }
 }
 </script>
 
 <style lang="scss" scoped>
+.delete{
+  margin-top: 20px;
+  color: rgb(175, 37, 37);
+}
 .wrap-cont{
   height: auto;
   width: 90%;

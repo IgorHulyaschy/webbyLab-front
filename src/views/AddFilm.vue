@@ -21,7 +21,7 @@
       <div class="actors" :key="i" v-for="(input, i) in actors">
         <div class="settings" >
           <span>Actor`s name</span>
-          <Text placeholder="Name..." v-model="input.fname"/>
+          <Text placeholder="Name..." v-model="input.fname" @keydown="validate(event)"/>
         </div>
         <div class="settings">
           <span>Actor`s last name</span>
@@ -29,7 +29,9 @@
         </div>
         <hr/>
       </div>
-      <input type="file" @change="getFile"/>
+      <input type="file" accept=".txt" @change="getFile"/>
+      <div class="error" v-if="fileError">{{errorFileMessage}}</div>
+      <div class="succses" v-if="succsesBool">{{succses}}</div>
       <div class="buts">
         <CustomBut value="Add actor" @click.prevent="pushInput"/>
         <CustomBut value="Add film" @click="create"/>
@@ -45,8 +47,8 @@ import Text from '../components/controllers/Text.vue'
 import Radio from '../components/controllers/Radio.vue'
 import CustomBut from '../components/controllers/CustomBut.vue'
 import api from '../api/api'
-import router from '../router/index'
-import { useField } from 'vee-validate'
+// import router from '../router/index'
+import { useField} from 'vee-validate'
 import * as yup from 'yup'
 export default {
   name: "AddFilm",
@@ -57,6 +59,7 @@ export default {
     CustomBut,
   },
   data() {
+
     const {errorMessage: filmError, value: filmName} = useField('fieldName', yup.string().min(3).max(30).required());
     const {errorMessage: yearError, value: date_of_release} = useField('fieldName', yup.number().min(1900).max(2021).required());
     return {
@@ -68,7 +71,11 @@ export default {
       date_of_release,
       file: String,
       filmError,
-      yearError
+      yearError,
+      fileError: false,
+      errorFileMessage: String,
+      succses: String,
+      succsesBool: false,
     }
   },
   methods: {
@@ -78,6 +85,9 @@ export default {
         lname: "",
       })
     },
+    validate(event) {
+      return /[a-z 0-9]/i.test(event.key)
+    },
     getFile(e){
       const file = e.target.files[0]
       const reader = new FileReader();
@@ -86,8 +96,14 @@ export default {
         let rows = content.split('\r\n');
         api.post('films', rows)
           .then(() => {
-            console.log("succses")
-            router.push('/films')
+            this.fileError = false;
+            this.succsesBool = true;
+            this.succses = "All the films from the file added succsessfully"
+          })
+          .catch((err) => {
+            this.succsesBool = false;
+            this.errorFileMessage = err.response.data.message || err.response.data.error
+            this.fileError = true
           });
       });
       reader.readAsText(file)        
@@ -99,13 +115,23 @@ export default {
         format: this.selected,
         actors: this.actors,
       }
-      api.post("film", data)
-        .then(() => {
-          router.push('/films')
-        })
-        .catch((err) => {
-          console.log(err.details.message)
-        })
+      if(this.filmError === undefined && this.yearError === undefined && this.selected != ""){
+        api.post("film", data)
+          .then(() => {
+            this.fileError = false;
+            this.succsesBool = true;
+            this.succses = "Film created!!!"
+          })
+          .catch((err) => {
+            this.fileError = true;
+            this.succsesBool = false;
+            this.errorFileMessage = err.response.data.error;
+          })
+      }
+      else {
+        this.errorFileMessage = "Fill all the fields correctly"
+        this.fileError = true 
+      }
     }
   }
 }
@@ -126,6 +152,14 @@ export default {
     justify-content: center;
     align-items: center;
     width: 80%;
+    .error{
+        color: rgb(197, 31, 31);
+    }
+    .succses{
+      color: green;
+      font-size: 20px;
+      font-weight: bold;
+    }
     .mes{
       font-size: 26px;
       font-weight: bold;
